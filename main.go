@@ -267,12 +267,16 @@ func main() {
 		Addr:         ":8080",
 		Handler:      &requesthandler{},
 	}
-	if err != nil {
-		fmt.Println("Failed to bind to UDS, falling back to TCP/IP")
-		fmt.Println(err.Error())
+	
+	_, useTcpIp := os.LookupEnv("USE_TCP_IP")
+	defer listener.Close()
+	if err != nil || useTcpIp {
+		if err != nil {	
+			fmt.Println("Failed to bind to UDS, falling back to TCP/IP")
+			fmt.Println(err.Error())
+		}
 		srv.ListenAndServe()
 	} else {
-		defer listener.Close()
 		srv.Serve(listener)
 	}
 }
