@@ -253,6 +253,7 @@ func RelativeUrl(in string) (newurl string) {
 	segment_url.RawQuery = segment_query.Encode()
 	segment_url.Path = path_prefix + segment_url.Path
 	return segment_url.RequestURI()
+}
 
 func main() {
 	path_prefix = os.Getenv("PREFIX_PATH")
