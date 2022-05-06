@@ -253,14 +253,10 @@ func RelativeUrl(in string) (newurl string) {
 	segment_url.RawQuery = segment_query.Encode()
 	segment_url.Path = path_prefix + segment_url.Path
 	return segment_url.RequestURI()
-}
 
 func main() {
 	path_prefix = os.Getenv("PREFIX_PATH")
-
-	socket := "socket" + string(os.PathSeparator) + "http-proxy.sock"
-	syscall.Unlink(socket)
-	listener, err := net.Listen("unix", socket)
+	_, useTcpIp := os.LookupEnv("USE_TCP_IP")
 	srv := &http.Server{
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 1 * time.Hour,
@@ -268,15 +264,17 @@ func main() {
 		Handler:      &requesthandler{},
 	}
 	
-	_, useTcpIp := os.LookupEnv("USE_TCP_IP")
-	defer listener.Close()
-	if err != nil || useTcpIp {
-		if err != nil {	
-			fmt.Println("Failed to bind to UDS, falling back to TCP/IP")
-			fmt.Println(err.Error())
-		}
+	if useTcpIp {
 		srv.ListenAndServe()
 	} else {
+		socket := "socket" + string(os.PathSeparator) + "http-proxy.sock"
+		syscall.Unlink(socket)
+		listener, err := net.Listen("unix", socket)
+		if err != nil {	
+			fmt.Println("Failed to bind to UDS")
+			fmt.Println(err.Error())
+		}
 		srv.Serve(listener)
+		defer listener.Close()
 	}
 }
